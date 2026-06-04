@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DML Auto-Battler Complete UX Wireframe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b132b;
+      --grid-color: rgba(94, 211, 243, 0.08);
+      --border-color: #5ed3f3;
+      --border-dash: rgba(94, 211, 243, 0.4);
+      --text-color: #e0fbfc;
+      --accent-color: #ff007f;
+      --card-bg: rgba(28, 37, 65, 0.85);
+      --highlight: rgba(94, 211, 243, 0.15);
+      --ready-color: #ffeb3b;
+      --win-color: #4caf50;
+      --lose-color: #f44336;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: 
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+      background-size: 20px 20px;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Screen Selector Navigation */
+    .phase-selector {
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 6px;
+      border-radius: 30px;
+    }
+
+    .phase-tab {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-color);
+      font-weight: bold;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .phase-tab.active {
+      background: var(--border-color);
+      color: #000;
+      box-shadow: 0 0 10px rgba(94, 211, 243, 0.4);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1024px;
+      border: 3px double var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-color);
+      box-shadow: 0 0 35px rgba(94, 211, 243, 0.15);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+
+    .blueprint-badge {
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: var(--border-color);
+      color: #000;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* View panels management via body state */
+    .view-panel {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    body.state-menu #view-menu { display: flex; }
+    body.state-prep #view-run { display: flex; }
+    body.state-combat #view-run { display: flex; }
+    body.state-codex #view-codex { display: flex; }
+    body.state-win #view-win { display: flex; }
+    body.state-lose #view-lose { display: flex; }
+    body.state-leaderboard #view-leaderboard { display: flex; }
+    body.state-options #view-options { display: flex; }
+
+    /* Only show prep elements in prep phase */
+    body.state-prep .bench-wrapper,
+    body.state-prep .prep-container,
+    body.state-prep .controls-wrapper {
+      display: block;
+    }
+    body.state-prep .prep-container {
+      display: grid;
+    }
+    body.state-prep .portraits-wrapper,
+    body.state-prep .combat-only-controls {
+      display: none !important;
+    }
+
+    /* Only show combat elements in combat phase */
+    body.state-combat .bench-wrapper,
+    body.state-combat .prep-container,
+    body.state-combat .controls-wrapper {
+      display: none !important;
+    }
+    body.state-combat .portraits-wrapper,
+    body.state-combat .combat-only-controls {
+      display: grid;
+    }
+    body.state-combat .combat-only-controls {
+      display: flex;
+    }
+
+    /* --- COMMON HUD TOP BAR --- */
+    .hud-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border-radius: 8px;
+    }
+
+    .hud-left, .hud-right {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .hud-item {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .hud-value {
+      font-weight: 700;
+      color: var(--border-color);
+    }
+
+    .hearts {
+      color: var(--accent-color);
+    }
+
+    .codex-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--border-color);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .codex-btn:hover {
+      background: var(--border-color);
+      color: #000;
+    }
+
+    /* --- BATTLEFIELD AREA (SAP Queue Layout) --- */
+    .battlefield-wrapper {
+      border: 1px dashed var(--border-color);
+      padding: 16px;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .section-label {
+      position: absolute;
+      top: -8px;
+      left: 12px;
+      background: var(--bg-color);
+      padding: 0 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--border-color);
+    }
+
+    .battlefield {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      min-height: 180px;
+    }
+
+    .queue-side {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .queue-side.ally-side {
+      justify-content: flex-end;
+    }
+
+    .queue-side.enemy-side {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+    }
+
+    .clash-divider {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--accent-color);
+      padding: 0 10px;
+      text-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+    }
+
+    .combat-slot {
+      width: 100px;
+      height: 120px;
+      border: 2px dashed var(--border-dash);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(28, 37, 65, 0.5);
+      position: relative;
+    }
+
+    .combat-slot.active-clash {
+      border-style: solid;
+      background: rgba(28, 37, 65, 0.8);
+    }
+
+    .combat-slot.ally {
+      border-color: var(--border-color);
+    }
+
+    .combat-slot.ally.active-clash {
+      box-shadow: 0 0 12px rgba(94, 211, 243, 0.25);
+    }
+
+    .combat-slot.enemy {
+      border-color: var(--accent-color);
+    }
+
+    .combat-slot.enemy.active-clash {
+      box-shadow: 0 0 12px rgba(255, 0, 127, 0.25);
+    }
+
+    /* Buff Projection Arrows */
+    .buff-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: var(--border-color);
+      opacity: 0.7;
+    }
+
+    .ally-side .buff-arrow {
+      right: -10px;
+    }
+
+    .enemy-side .buff-arrow {
+      left: -10px;
+      color: var(--accent-color);
+    }
+
+    .dragon-token {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+      background: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 11px;
+      font-weight: bold;
+      box-shadow: 0 0 10px rgba(94, 211, 243, 0.3);
+      text-align: center;
+    }
+
+    .dragon-token.enemy-dragon {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 10px rgba(255, 0, 127, 0.3);
+    }
+
+    .class-label {
+      font-size: 8px;
+      opacity: 0.7;
+      text-transform: uppercase;
+    }
+
+    .elements-badge {
+      display: flex;
+      gap: 2px;
+      margin-top: 4px;
+    }
+
+    .element-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .el-fire { background-color: #ff5722; }
+    .el-wind { background-color: #00bcd4; }
+    .el-earth { background-color: #795548; }
+
+    /* --- ACTIVE DRAGON PORTRAITS & FURY STATUS --- */
+    .portraits-wrapper {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .portrait-card {
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    .portrait-card.glowing {
+      box-shadow: 0 0 15px var(--ready-color);
+      border-color: var(--ready-color);
+      animation: pulse 1.5s infinite;
+      cursor: pointer;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 5px rgba(255, 235, 59, 0.4); }
+      50% { box-shadow: 0 0 18px rgba(255, 235, 59, 0.85); }
+      100% { box-shadow: 0 0 5px rgba(255, 235, 59, 0.4); }
+    }
+
+    .portrait-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    .portrait-card.glowing .portrait-thumb {
+      border-color: var(--ready-color);
+    }
+
+    .portrait-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .portrait-name {
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .bar-fill.hp { background: #4caf50; }
+    .bar-fill.fury { background: var(--ready-color); }
+
+    .fury-ready-tag {
+      position: absolute;
+      top: -6px;
+      right: 10px;
+      background: var(--ready-color);
+      color: #000;
+      font-size: 8px;
+      font-weight: bold;
+      padding: 1px 6px;
+      border-radius: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- BENCH AREA --- */
+    .bench-slots {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .bench-slot {
+      flex: 1;
+      height: 70px;
+      border: 1px dashed var(--border-dash);
+      border-radius: 6px;
+      background: rgba(28, 37, 65, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .bench-slot .dragon-token {
+      width: 58px;
+      height: 58px;
+      font-size: 10px;
+    }
+
+    /* --- PREP SHOP & INVENTORY --- */
+    .shop-wrapper {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      position: relative;
+      background: var(--card-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .shop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shop-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .reroll-btn {
+      background: var(--border-color);
+      border: none;
+      color: #000;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .shop-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .shop-card {
+      border: 1px solid var(--border-dash);
+      border-radius: 6px;
+      padding: 8px;
+      background: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+
+    .shop-card.item-slot {
+      border-color: var(--accent-color);
+      background: rgba(255, 0, 127, 0.05);
+    }
+
+    .shop-card-badge {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px;
+      font-weight: bold;
+      padding: 1px 4px;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+
+    .badge-dragon { background: var(--border-color); color: #000; }
+    .badge-item { background: var(--accent-color); color: #fff; }
+
+    .shop-card-name {
+      font-size: 11px;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .shop-card-cost {
+      font-size: 10px;
+      color: var(--ready-color);
+      font-weight: bold;
+    }
+
+    .buy-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--border-color);
+      padding: 2px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .shop-card.item-slot .buy-btn {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .inventory-wrapper {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      position: relative;
+      background: var(--card-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .inventory-slots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      height: 60px;
+    }
+
+    .inv-slot {
+      border: 1px dashed var(--border-dash);
+      border-radius: 4px;
+      background: rgba(28, 37, 65, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--border-color);
+    }
+
+    /* ACTION CONTROLS */
+    .action-btn {
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .action-btn.start {
+      background: var(--border-color);
+      color: #000;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 0 10px rgba(94, 211, 243, 0.3);
+    }
+
+    .action-btn.start:hover { background: #4cc7e6; }
+
+    /* --- VIEW: MAIN MENU --- */
+    .menu-panel {
+      text-align: center;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .menu-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: var(--border-color);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 0 15px rgba(94, 211, 243, 0.5);
+    }
+
+    .profile-card {
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 16px;
+      width: 100%;
+      max-width: 400px;
+      text-align: left;
+    }
+
+    .xp-bar-container {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .xp-text {
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .menu-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--border-color);
+      font-weight: bold;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .menu-btn:hover {
+      background: var(--highlight);
+      box-shadow: 0 0 8px rgba(94, 211, 243, 0.3);
+    }
+
+    .menu-btn.primary {
+      background: var(--border-color);
+      color: #000;
+    }
+
+    .menu-btn.primary:hover { background: #4cc7e6; }
+
+    /* --- VIEW: CODEX (DRAGOPEDIA) & PROGRESSION --- */
+    .codex-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .codex-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-dash);
+      padding-bottom: 12px;
+    }
+
+    .codex-section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--border-color);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 10px;
+    }
+
+    .codex-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .codex-card {
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+      position: relative;
+    }
+
+    .codex-card.locked {
+      border-color: var(--border-dash);
+      opacity: 0.5;
+      background: rgba(28, 37, 65, 0.2);
+    }
+
+    .codex-card-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    .codex-card.locked .codex-card-thumb {
+      border-color: var(--border-dash);
+      background: rgba(28, 37, 65, 0.4);
+      color: var(--border-dash);
+    }
+
+    .codex-item-card {
+      border: 1px solid var(--accent-color);
+      background: rgba(255, 0, 127, 0.05);
+    }
+
+    .codex-item-card.locked {
+      border-color: var(--border-dash);
+      background: rgba(28, 37, 65, 0.2);
+    }
+
+    .progression-timeline {
+      margin-top: 16px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-steps {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+    }
+
+    .timeline-step {
+      flex: 1;
+      border: 1px solid var(--border-dash);
+      background: var(--bg-color);
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 11px;
+      position: relative;
+    }
+
+    .timeline-step.unlocked {
+      border-color: var(--win-color);
+      background: rgba(76, 175, 80, 0.05);
+    }
+
+    .step-badge {
+      font-size: 9px;
+      font-weight: bold;
+      color: var(--win-color);
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    /* --- END SCREENS (WIN / LOSE) --- */
+    .end-screen {
+      text-align: center;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--card-bg);
+    }
+
+    .end-screen.win {
+      border-color: var(--win-color);
+      box-shadow: 0 0 25px rgba(76, 175, 80, 0.25);
+    }
+
+    .end-screen.lose {
+      border-color: var(--lose-color);
+      box-shadow: 0 0 25px rgba(244, 67, 54, 0.25);
+    }
+
+    .end-title {
+      font-size: 36px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .end-title.win-text {
+      color: var(--win-color);
+      text-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    }
+
+    .end-title.lose-text {
+      color: var(--lose-color);
+      text-shadow: 0 0 15px rgba(244, 67, 54, 0.5);
+    }
+
+    .stat-list {
+      display: flex;
+      gap: 30px;
+      margin: 10px 0;
+    }
+
+    .stat-box {
+      border: 1px dashed var(--border-dash);
+      border-radius: 4px;
+      padding: 12px 20px;
+      background: var(--bg-color);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--border-color);
+    }
+
+    .discoveries-card {
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-color);
+      text-align: left;
+    }
+
+    .disc-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .disc-badge {
+      background: var(--win-color);
+      color: #000;
+      font-size: 8px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* --- LEADERBOARD SCREEN --- */
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .leaderboard-table th, .leaderboard-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-dash);
+    }
+
+    .leaderboard-table th {
+      background: rgba(94, 211, 243, 0.1);
+      color: var(--border-color);
+      font-weight: bold;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .leaderboard-table tr.highlight {
+      background: var(--highlight);
+      border: 2px solid var(--border-color);
+      font-weight: bold;
+    }
+
+    /* --- OPTIONS SCREEN --- */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .option-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .option-label {
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: var(--border-color);
+    }
+
+    .option-input {
+      padding: 10px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-color);
+      font-size: 14px;
+    }
+
+    .slider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    /* Annotation panel */
+    .annotation-panel {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 1024px;
+      border: 1px solid var(--border-dash);
+      background: rgba(28, 37, 65, 0.5);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .annotation-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: var(--border-color);
+      text-transform: uppercase;
+    }
+
+    .annotation-list {
+      list-style-type: square;
+      padding-left: 20px;
+      font-size: 12px;
+      line-height: 1.6;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body class="state-menu" id="body-container">
+
+  <!-- Interactive Screen Selector Tab Bar -->
+  <div class="phase-selector">
+    <button class="phase-tab active" id="tab-menu" onclick="setPhase('menu')">Main Menu</button>
+    <button class="phase-tab" id="tab-prep" onclick="setPhase('prep')">Prep Phase</button>
+    <button class="phase-tab" id="tab-combat" onclick="setPhase('combat')">Combat Phase</button>
+    <button class="phase-tab" id="tab-codex" onclick="setPhase('codex')">Dragopedia (Codex)</button>
+    <button class="phase-tab" id="tab-leaderboard" onclick="setPhase('leaderboard')">Leaderboard</button>
+    <button class="phase-tab" id="tab-options" onclick="setPhase('options')">Options</button>
+    <button class="phase-tab" id="tab-win" onclick="setPhase('win')">Win Screen</button>
+    <button class="phase-tab" id="tab-lose" onclick="setPhase('lose')">Lose Screen</button>
+  </div>
+
+  <div class="container">
+    <div class="blueprint-badge">Interactive UX Wireframe</div>
+
+    <!-- ================= VIEW 1: MAIN MENU ================= -->
+    <div class="view-panel" id="view-menu">
+      <div class="menu-panel">
+        <div class="menu-title">Dragon Mania Legends:<br>Bench Battles</div>
+        
+        <!-- Profile Progression Card -->
+        <div class="profile-card">
+          <div style="font-weight:bold; font-size:14px; color:var(--border-color);" id="menu-player-display-ws">Dragoneer (Level 2)</div>
+          <div class="xp-bar-container">
+            <div class="bar"><div class="bar-fill hp" style="width: 53%;"></div></div>
+            <div class="xp-text">
+              <span>EXP: 800 / 1,500</span>
+              <span>53% to Level 3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="menu-nav">
+          <button class="menu-btn primary" onclick="setPhase('prep')">Start New Campaign</button>
+          <button class="menu-btn" onclick="setPhase('codex')">Open Dragopedia (Codex)</button>
+          <button class="menu-btn" onclick="setPhase('options')">Player Options</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: RUN WORKSPACE (PREP & COMBAT) ================= -->
+    <div class="view-panel" id="view-run">
+      <!-- HUD TOP BAR -->
+      <div class="hud-bar">
+        <div class="hud-left">
+          <div class="hud-item">Wave <span class="hud-value">03 / 10</span></div>
+          <div class="hud-item">Hearts <span class="hud-value hearts">♥ ♥ ♥</span></div>
+        </div>
+        <div class="hud-item">Player: <span class="hud-value" id="hud-name-display-ws">Dragoneer</span></div>
+        <div class="hud-item">Score: <span class="hud-value">01,250</span></div>
+        <div class="hud-right">
+          <div class="hud-item">Gold: <span class="hud-value">18g</span></div>
+          <button class="codex-btn" onclick="setPhase('codex')">📖 Codex</button>
+        </div>
+      </div>
+
+      <!-- BATTLEFIELD AREA (SAP Queue Layout) -->
+      <div class="battlefield-wrapper">
+        <div class="section-label">Battlefield (Super Auto Pets Queue Clash)</div>
+        <div class="battlefield">
+          
+          <!-- Allied Queue (Rear -> Middle -> Front) -->
+          <div class="queue-side ally-side">
+            <!-- Rear Slot -->
+            <div class="combat-slot ally">
+              <span class="buff-arrow">➔</span>
+              <div class="slot-label">Rear</div>
+              <div class="dragon-token">
+                Wind
+                <span class="class-label">Ranger</span>
+                <div class="elements-badge">
+                  <span class="element-dot el-wind"></span>
+                </div>
+              </div>
+            </div>
+            <!-- Middle Slot -->
+            <div class="combat-slot ally">
+              <span class="buff-arrow">➔</span>
+              <div class="slot-label">Middle</div>
+              <div class="dragon-token">
+                Lava
+                <span class="class-label">Guardian</span>
+                <div class="elements-badge">
+                  <span class="element-dot el-earth"></span>
+                  <span class="element-dot el-fire"></span>
+                </div>
+              </div>
+            </div>
+            <!-- Front Slot -->
+            <div class="combat-slot ally active-clash">
+              <div class="slot-label">Front</div>
+              <div class="dragon-token">
+                Smoke
+                <span class="class-label">Berserker</span>
+                <div class="elements-badge">
+                  <span class="element-dot el-fire"></span>
+                  <span class="element-dot el-wind"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clash-divider">⚔</div>
+
+          <!-- Enemy Queue (Front <- Middle <- Rear) -->
+          <div class="queue-side enemy-side">
+            <!-- Rear Slot -->
+            <div class="combat-slot enemy">
+              <div class="slot-label">Rear</div>
+              <div class="dragon-token enemy-dragon">
+                Dust
+                <span class="class-label">Ranger</span>
+                <div class="elements-badge">
+                  <span class="element-dot el-wind"></span>
+                  <span class="element-dot el-earth"></span>
+                </div>
+              </div>
+            </div>
+            <!-- Middle Slot -->
+            <div class="combat-slot enemy">
+              <span class="buff-arrow">⮜</span>
+              <div class="slot-label">Middle</div>
+              <div class="dragon-token enemy-dragon">
+                Thaw
+                <span class="class-label">Sage</span>
+                <div class="elements-badge">
+                  <span class="element-dot el-wind"></span>
+                </div>
+              </div>
+            </div>
+            <!-- Front Slot -->
+            <div class="combat-slot enemy active-clash">
+              <span class="buff-arrow">⮜</span>
+              <div class="slot-label">Front</div>
+              <div class="dragon-token enemy-dragon">
+                Clay
+                <span class="class-label">Guardian</span>
+                <div class="elements-badge">
+                  <span class="element-dot el-earth"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- COMBAT PHASE ONLY: DRAGON STATUS CARDS -->
+      <div class="portraits-wrapper">
+        <!-- Smoke Dragon -->
+        <div class="portrait-card glowing" id="portrait-smoke-ws" onclick="triggerFury('Smoke')">
+          <div class="fury-ready-tag" id="fury-ready-smoke-ws">Fury Ready</div>
+          <div class="portrait-thumb">SMK</div>
+          <div class="portrait-info">
+            <div class="portrait-name">Smoke (Berserker / Ranger)</div>
+            <div>HP <div class="bar"><div class="bar-fill hp" style="width: 75%;"></div></div></div>
+            <div>FURY <div class="bar"><div class="bar-fill fury" id="fury-bar-smoke-ws" style="width: 100%;"></div></div></div>
+          </div>
+        </div>
+
+        <!-- Lava Dragon -->
+        <div class="portrait-card" id="portrait-lava-ws" onclick="triggerFury('Lava')">
+          <div class="fury-ready-tag" id="fury-ready-lava-ws" style="display:none;">Fury Ready</div>
+          <div class="portrait-thumb">LAV</div>
+          <div class="portrait-info">
+            <div class="portrait-name">Lava (Guardian / Berserker)</div>
+            <div>HP <div class="bar"><div class="bar-fill hp" style="width: 100%;"></div></div></div>
+            <div>FURY <div class="bar"><div class="bar-fill fury" id="fury-bar-lava-ws" style="width: 0%;"></div></div></div>
+          </div>
+        </div>
+
+        <!-- Wind Dragon -->
+        <div class="portrait-card" id="portrait-wind-ws" onclick="triggerFury('Wind')">
+          <div class="fury-ready-tag" id="fury-ready-wind-ws" style="display:none;">Fury Ready</div>
+          <div class="portrait-thumb">WND</div>
+          <div class="portrait-info">
+            <div class="portrait-name">Wind (Ranger)</div>
+            <div>HP <div class="bar"><div class="bar-fill hp" style="width: 100%;"></div></div></div>
+            <div>FURY <div class="bar"><div class="bar-fill fury" id="fury-bar-wind-ws" style="width: 0%;"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREP PHASE ONLY: BENCH AREA -->
+      <div class="bench-wrapper">
+        <div class="section-label">Bench (Breeding / Preparation Slots)</div>
+        <div class="bench-slots">
+          <div class="bench-slot">
+            <div class="dragon-token">
+              Fire
+              <span class="class-label">Berserker</span>
+              <div class="elements-badge">
+                <span class="element-dot el-fire"></span>
+              </div>
+            </div>
+          </div>
+          <div class="bench-slot">
+            <div class="dragon-token">
+              Wind
+              <span class="class-label">Ranger</span>
+              <div class="elements-badge">
+                <span class="element-dot el-wind"></span>
+              </div>
+            </div>
+          </div>
+          <div class="bench-slot"><span class="bench-drag-indicator">Drag Fire onto Wind to breed a hybrid Smoke Dragon!</span></div>
+          <div class="bench-slot"></div>
+          <div class="bench-slot"></div>
+        </div>
+      </div>
+
+      <!-- PREP PHASE ONLY: 4-SLOT SHOP & INVENTORY -->
+      <div class="prep-container">
+        <!-- Shop Panel -->
+        <div class="shop-wrapper">
+          <div class="section-label">Prep Shop</div>
+          <div class="shop-header">
+            <div class="shop-title">BUY DRAGONS (SLOTS 1-3) & ITEMS (SLOT 4)</div>
+            <button class="reroll-btn">Reroll (1g)</button>
+          </div>
+          <div class="shop-cards">
+            <div class="shop-card">
+              <span class="shop-card-badge badge-dragon">Dragon</span>
+              <div class="shop-card-name">Fire Dragon</div>
+              <div class="shop-card-cost">3 Gold</div>
+              <button class="buy-btn">Buy</button>
+            </div>
+            <div class="shop-card">
+              <span class="shop-card-badge badge-dragon">Dragon</span>
+              <div class="shop-card-name">Earth Dragon</div>
+              <div class="shop-card-cost">3 Gold</div>
+              <button class="buy-btn">Buy</button>
+            </div>
+            <div class="shop-card">
+              <span class="shop-card-badge badge-dragon">Dragon</span>
+              <div class="shop-card-name">Wind Dragon</div>
+              <div class="shop-card-cost">3 Gold</div>
+              <button class="buy-btn">Buy</button>
+            </div>
+            <div class="shop-card item-slot">
+              <span class="shop-card-badge badge-item">Item</span>
+              <div class="shop-card-name">Iron Sword</div>
+              <div class="shop-card-cost">5 Gold</div>
+              <button class="buy-btn">Buy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item Inventory -->
+        <div class="inventory-wrapper">
+          <div class="section-label">Detached Items</div>
+          <div class="shop-title" style="margin-bottom: 2px;">INVENTORY</div>
+          <div class="inventory-slots">
+            <div class="inv-slot">Shield</div>
+            <div class="inv-slot">[Empty]</div>
+            <div class="inv-slot">[Empty]</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREP PHASE ONLY: START ACTION -->
+      <div class="controls-wrapper">
+        <button class="action-btn start" onclick="setPhase('combat')">Start Battle ➔</button>
+      </div>
+
+      <!-- COMBAT PHASE ONLY: CONTROLS & TIMERS -->
+      <div class="combat-only-controls">
+        <div class="combat-tip">💡 Tap on glowing portraits to trigger passive-active Dragon Fury skills!</div>
+        <button class="action-btn start" onclick="setPhase('win')">Force Victory ➔</button>
+        <button class="action-btn start" style="background:var(--accent-color); border-color:var(--accent-color);" onclick="setPhase('lose')">Force Defeat ➔</button>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 3: CODEX (DRAGOPEDIA) ================= -->
+    <div class="view-panel" id="view-codex">
+      <div class="codex-panel">
+        <div class="codex-header">
+          <div style="font-size:18px; font-weight:bold; color:var(--border-color);">📖 Dragopedia & Equipment Codex</div>
+          <button class="codex-btn" onclick="setPhase('menu')">Close Codex</button>
+        </div>
+
+        <div class="codex-section-title">Dragons (Bred in-game)</div>
+        <div class="codex-grid">
+          <div class="codex-card">
+            <div class="codex-card-thumb" style="border-color:#ff5722;">SMK</div>
+            <div style="font-size:12px; font-weight:bold;">Smoke Dragon</div>
+            <div class="elements-badge">
+              <span class="element-dot el-fire"></span>
+              <span class="element-dot el-wind"></span>
+            </div>
+          </div>
+          <div class="codex-card">
+            <div class="codex-card-thumb" style="border-color:#795548;">LAV</div>
+            <div style="font-size:12px; font-weight:bold;">Lava Dragon</div>
+            <div class="elements-badge">
+              <span class="element-dot el-earth"></span>
+              <span class="element-dot el-fire"></span>
+            </div>
+          </div>
+          <div class="codex-card locked">
+            <div class="codex-card-thumb">?</div>
+            <div style="font-size:12px; font-weight:bold; color:var(--border-dash);">Locked Hybrid</div>
+            <div class="elements-badge">
+              <span class="element-dot el-fire"></span>
+              <span class="element-dot" style="background:#4caf50;"></span>
+            </div>
+            <div style="font-size:9px; opacity:0.4;">Unlocks with Plant base</div>
+          </div>
+        </div>
+
+        <div class="codex-section-title">Equipment (Equipped at least 1 time)</div>
+        <div class="codex-grid">
+          <div class="codex-card codex-item-card">
+            <div class="codex-card-thumb" style="border-color:var(--accent-color);">⚔️</div>
+            <div style="font-size:12px; font-weight:bold;">Iron Sword</div>
+            <div style="font-size:9px; color:var(--accent-color);">Used 3 times</div>
+          </div>
+          <div class="codex-card codex-item-card">
+            <div class="codex-card-thumb" style="border-color:var(--accent-color);">🛡️</div>
+            <div style="font-size:12px; font-weight:bold;">Wooden Shield</div>
+            <div style="font-size:9px; color:var(--accent-color);">Used 1 time</div>
+          </div>
+          <div class="codex-card codex-item-card locked">
+            <div class="codex-card-thumb">?</div>
+            <div style="font-size:12px; font-weight:bold; color:var(--border-dash);">Locked Item</div>
+            <div style="font-size:9px; opacity:0.4;">Equip 1 time to log</div>
+          </div>
+        </div>
+
+        <!-- Progression timeline -->
+        <div class="progression-timeline">
+          <div style="font-size:13px; font-weight:bold; color:var(--border-color);">Player Progression Map (Unlocks Shop Drafts)</div>
+          <div class="timeline-steps">
+            <div class="timeline-step unlocked">
+              <div class="step-badge">Level 1</div>
+              <div>Fire, Wind, Earth elements & Sword item unlocked.</div>
+            </div>
+            <div class="timeline-step unlocked">
+              <div class="step-badge">Level 2</div>
+              <div>Plant element base dragon & Shield item unlocked.</div>
+            </div>
+            <div class="timeline-step">
+              <div class="step-badge" style="color:var(--border-dash);">Level 3</div>
+              <div>Metal element base dragon & Spiked Helmet item unlocked.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 4: LEADERBOARD ================= -->
+    <div class="view-panel" id="view-leaderboard">
+      <div class="codex-panel">
+        <div class="codex-header">
+          <div style="font-size:18px; font-weight:bold; color:var(--border-color);">🏆 Dragolandia High Score Leaderboard</div>
+          <button class="codex-btn" onclick="setPhase('menu')">Close</button>
+        </div>
+        
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player Name</th>
+              <th>Wave Reached</th>
+              <th>Final Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#1</td>
+              <td>FireBreather99</td>
+              <td>Wave 10 (Win)</td>
+              <td>3,250</td>
+            </tr>
+            <tr>
+              <td>#2</td>
+              <td>VikingSlayer</td>
+              <td>Wave 9</td>
+              <td>2,400</td>
+            </tr>
+            <tr class="highlight">
+              <td>#3</td>
+              <td id="leaderboard-name-cell-ws">Dragoneer</td>
+              <td>Wave 6</td>
+              <td>1,800</td>
+            </tr>
+            <tr>
+              <td>#4</td>
+              <td>ScaleMaster</td>
+              <td>Wave 5</td>
+              <td>950</td>
+            </tr>
+            <tr>
+              <td>#5</td>
+              <td>BabyDragon</td>
+              <td>Wave 3</td>
+              <td>300</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 5: OPTIONS SCREEN ================= -->
+    <div class="view-panel" id="view-options">
+      <div class="codex-panel">
+        <div class="codex-header">
+          <div style="font-size:18px; font-weight:bold; color:var(--border-color);">⚙️ Profile & Settings Options</div>
+          <button class="codex-btn" onclick="setPhase('menu')">Close</button>
+        </div>
+
+        <div class="options-grid">
+          <div class="option-row">
+            <label class="option-label" for="username-input-ws">Leaderboard Profile Name</label>
+            <input type="text" class="option-input" id="username-input-ws" value="Dragoneer" oninput="updateName(this.value)">
+          </div>
+
+          <div class="option-row">
+            <div class="slider-row">
+              <span class="option-label">Sound Effects</span>
+              <input type="checkbox" checked>
+            </div>
+            <div class="slider-row">
+              <span class="option-label">Background Music</span>
+              <input type="checkbox" checked>
+            </div>
+          </div>
+
+          <button class="menu-btn primary" onclick="setPhase('menu')">Save & Return</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 6: WIN END SCREEN ================= -->
+    <div class="view-panel" id="view-win">
+      <div class="end-screen win">
+        <div class="end-title win-text">Victory!</div>
+        <div style="font-size:14px; opacity:0.8;">Dragolandia Has Been Defended Successfully!</div>
+
+        <!-- Scores and remaining resources -->
+        <div class="stat-list">
+          <div class="stat-box">
+            <div class="stat-label">Wave Cleared</div>
+            <div class="stat-value">10 / 10</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Hearts Left</div>
+            <div class="stat-value hearts">♥ ♥ ♥</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Score</div>
+            <div class="stat-value" style="color:var(--ready-color);">2,850</div>
+          </div>
+        </div>
+
+        <!-- EXP Progression indicator -->
+        <div class="profile-card" style="border-color:var(--win-color);">
+          <div style="font-weight:bold; font-size:12px; color:var(--win-color);">Level 2 ➔ Level 3 (EXP Gained: +2,850)</div>
+          <div class="xp-bar-container" style="margin-top: 6px;">
+            <div class="bar"><div class="bar-fill hp" style="width: 100%; transition: width 1s;"></div></div>
+            <div class="xp-text">
+              <span>EXP: 1,500 / 1,500</span>
+              <span style="color:var(--win-color); font-weight:bold;">LEVEL UP! Unlocks Plant base dragon in shop!</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="menu-btn primary" style="max-width: 250px; background:var(--win-color); border-color:var(--win-color);" onclick="setPhase('menu')">Return to Menu</button>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 7: LOSE END SCREEN ================= -->
+    <div class="view-panel" id="view-lose">
+      <div class="end-screen lose">
+        <div class="end-title lose-text">Defeat!</div>
+        <div style="font-size:14px; opacity:0.8;">The Viking Raiders Stormed the Habitats...</div>
+
+        <!-- Fail state statistics -->
+        <div class="stat-list">
+          <div class="stat-box">
+            <div class="stat-label">Wave Reached</div>
+            <div class="stat-value">Wave 06</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">EXP Earned</div>
+            <div class="stat-value" style="color:var(--accent-color);">+600</div>
+          </div>
+        </div>
+
+        <div class="menu-nav">
+          <button class="menu-btn primary" style="background:var(--lose-color); border-color:var(--lose-color);" onclick="setPhase('prep')">Try Again (Restart)</button>
+          <button class="menu-btn" onclick="setPhase('menu')">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Annotations panel -->
+  <div class="annotation-panel">
+    <div class="annotation-title">UI Mockup Interface Map Legend</div>
+    <ul class="annotation-list">
+      <li><strong>Leaderboard & Options Screen:</strong> Tabbing to "Options" allows name input. The "Leaderboard" shows the updated name dynamically mapped in Rank #3.</li>
+      <li><strong>Progression Unlocks:</strong> Leveling unlocks base elements and equipment. These base items/dragons appear in the Shop, facilitating hybrid breeding.</li>
+      <li><strong>Item Codex:</strong> Under the Codex tab, items are listed as unlocked only if equipped once; otherwise, they appear as locked silhouettes.</li>
+    </ul>
+  </div>
+
+  <script>
+    let furyInterval;
+
+    function setPhase(phase) {
+      const body = document.getElementById('body-container');
+      const tabs = document.querySelectorAll('.phase-tab');
+      
+      tabs.forEach(tab => {
+        if (tab.id === `tab-${phase}`) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+
+      clearInterval(furyInterval);
+      body.className = `state-${phase}`;
+
+      if (phase === 'combat') {
+        startCombatSimulation();
+      }
+    }
+
+    function updateName(name) {
+      if (!name) name = "Dragoneer";
+      document.getElementById('menu-player-display-ws').innerText = `${name} (Level 2)`;
+      document.getElementById('hud-name-display-ws').innerText = name;
+      document.getElementById('leaderboard-name-cell-ws').innerText = name;
+    }
+
+    function startCombatSimulation() {
+      const smokeBar = document.getElementById('fury-bar-smoke-ws');
+      const lavaBar = document.getElementById('fury-bar-lava-ws');
+      const windBar = document.getElementById('fury-bar-wind-ws');
+      const smokeCard = document.getElementById('portrait-smoke-ws');
+      const lavaCard = document.getElementById('portrait-lava-ws');
+      const windCard = document.getElementById('portrait-wind-ws');
+      const smokeTag = document.getElementById('fury-ready-smoke-ws');
+      const lavaTag = document.getElementById('fury-ready-lava-ws');
+      const windTag = document.getElementById('fury-ready-wind-ws');
+
+      smokeBar.style.width = '0%';
+      lavaBar.style.width = '0%';
+      windBar.style.width = '0%';
+      smokeCard.className = 'portrait-card';
+      lavaCard.className = 'portrait-card';
+      windCard.className = 'portrait-card';
+      smokeTag.style.display = 'none';
+      lavaTag.style.display = 'none';
+      windTag.style.display = 'none';
+
+      let smokeVal = 0;
+      let lavaVal = 0;
+      let windVal = 0;
+
+      furyInterval = setInterval(() => {
+        if (smokeVal < 100) {
+          smokeVal += 10;
+          smokeBar.style.width = smokeVal + '%';
+          if (smokeVal >= 100) {
+            smokeCard.className = 'portrait-card glowing';
+            smokeTag.style.display = 'block';
+          }
+        }
+
+        if (lavaVal < 100) {
+          lavaVal += 5;
+          lavaBar.style.width = lavaVal + '%';
+          if (lavaVal >= 100) {
+            lavaCard.className = 'portrait-card glowing';
+            lavaTag.style.display = 'block';
+          }
+        }
+
+        if (windVal < 100) {
+          windVal += 7;
+          windBar.style.width = windVal + '%';
+          if (windVal >= 100) {
+            windCard.className = 'portrait-card glowing';
+            windTag.style.display = 'block';
+          }
+        }
+      }, 400);
+    }
+
+    function triggerFury(dragon) {
+      if (dragon === 'Smoke') {
+        const card = document.getElementById('portrait-smoke-ws');
+        if (card.classList.contains('glowing')) {
+          card.className = 'portrait-card';
+          document.getElementById('fury-bar-smoke-ws').style.width = '0%';
+          document.getElementById('fury-ready-smoke-ws').style.display = 'none';
+          alert('🔥 Smoke Dragon triggers Fury (Berserker Active): Blazing Ash Storm deals splash damage to all 3 enemy slots!');
+        }
+      } else if (dragon === 'Lava') {
+        const card = document.getElementById('portrait-lava-ws');
+        if (card.classList.contains('glowing')) {
+          card.className = 'portrait-card';
+          document.getElementById('fury-bar-lava-ws').style.width = '0%';
+          document.getElementById('fury-ready-lava-ws').style.display = 'none';
+          alert('🛡️ Lava Dragon triggers Fury (Guardian Active): Magma Stone Wall blocks the next 2 physical hits!');
+        }
+      } else if (dragon === 'Wind') {
+        const card = document.getElementById('portrait-wind-ws');
+        if (card.classList.contains('glowing')) {
+          card.className = 'portrait-card';
+          document.getElementById('fury-bar-wind-ws').style.width = '0%';
+          document.getElementById('fury-ready-wind-ws').style.display = 'none';
+          alert('🌀 Wind Dragon triggers Fury (Ranger Active): Hurricane stuns the enemy Front unit for 1 turn!');
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>
